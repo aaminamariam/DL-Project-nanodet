@@ -43,19 +43,23 @@ def bb_intersection_over_union(boxA, boxB):
 def overlay_bbox_cv(img, dets, class_names, boxes,score_thresh):
     all_box = []
     for label in dets:
-        i = 0
+        #i = 0
         for bbox in dets[label]:
+            all_iou = []
             score = bbox[-1]
             if score > score_thresh:
                 x0, y0, x1, y1 = [int(i) for i in bbox[:4]]
                 boxB = [ x0, y0, x1, y1]
-                iou = bb_intersection_over_union(boxes[i],boxB)
-                i += 1
+                #iou = bb_intersection_over_union(boxes[i],boxB)
+                for i in boxes:
+                    iou = bb_intersection_over_union(i,boxB)
+                    all_iou.append(iou)
+                #i += 1
                 # print("point 1:",x0, y0)
                 # print("point 2:",x0, y1)
                 # print("point 3:",x1, y0)
                 # print("point 4:",x1, y1)
-                all_box.append([label, x0, y0, x1, y1, iou])
+                all_box.append([label, x0, y0, x1, y1, max(all_iou)])
     all_box.sort(key=lambda v: v[5])
     for box in all_box:
         label, x0, y0, x1, y1, score = box
