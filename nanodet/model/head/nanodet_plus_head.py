@@ -417,11 +417,11 @@ class NanoDetPlusHead(nn.Module):
         return det_results
 
     def show_result(
-        self, img, dets, class_names, score_thres=0.3, show=True, save_path=None
+        self, img, dets, class_names,boxes, score_thres=0.3, show=False, save_path=None, 
     ):
-        result = overlay_bbox_cv(img, dets, class_names, score_thresh=score_thres)
-        if show:
-            cv2.imshow("det", result)
+        result = overlay_bbox_cv(img, dets, class_names, boxes, score_thresh=score_thres)
+        # if show:
+        #     cv2.imshow("det", result)
         return result
 
     def get_bboxes(self, cls_preds, reg_preds, img_metas):

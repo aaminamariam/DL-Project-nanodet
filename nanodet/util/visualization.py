@@ -21,21 +21,47 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 
 _SMALL_OBJECT_AREA_THRESH = 1000
 
+def bb_intersection_over_union(boxA, boxB):
+	# determine the (x, y)-coordinates of the intersection rectangle
+	xA = max(boxA[0], boxB[0])
+	yA = max(boxA[1], boxB[1])
+	xB = min(boxA[2], boxB[2])
+	yB = min(boxA[3], boxB[3])
+	# compute the area of intersection rectangle
+	interArea = max(0, xB - xA + 1) * max(0, yB - yA + 1)
+	# compute the area of both the prediction and ground-truth
+	# rectangles
+	boxAArea = (boxA[2] - boxA[0] + 1) * (boxA[3] - boxA[1] + 1)
+	boxBArea = (boxB[2] - boxB[0] + 1) * (boxB[3] - boxB[1] + 1)
+	# compute the intersection over union by taking the intersection
+	# area and dividing it by the sum of prediction + ground-truth
+	# areas - the interesection area
+	iou = interArea / float(boxAArea + boxBArea - interArea)
+	# return the intersection over union value
+	return iou
 
-def overlay_bbox_cv(img, dets, class_names, score_thresh):
+def overlay_bbox_cv(img, dets, class_names, boxes,score_thresh):
     all_box = []
     for label in dets:
+        i = 0
         for bbox in dets[label]:
             score = bbox[-1]
             if score > score_thresh:
                 x0, y0, x1, y1 = [int(i) for i in bbox[:4]]
-                all_box.append([label, x0, y0, x1, y1, score])
+                boxB = [ x0, y0, x1, y1]
+                iou = bb_intersection_over_union(boxes[i],boxB)
+                i += 1
+                # print("point 1:",x0, y0)
+                # print("point 2:",x0, y1)
+                # print("point 3:",x1, y0)
+                # print("point 4:",x1, y1)
+                all_box.append([label, x0, y0, x1, y1, iou])
     all_box.sort(key=lambda v: v[5])
     for box in all_box:
         label, x0, y0, x1, y1, score = box
         # color = self.cmap(i)[:3]
         color = (_COLORS[label] * 255).astype(np.uint8).tolist()
-        text = "{}:{:.1f}%".format(class_names[label], score * 100)
+        text = "{}:{:.1f} IOU".format(class_names[label], score)
         txt_color = (0, 0, 0) if np.mean(_COLORS[label]) > 0.5 else (255, 255, 255)
         font = cv2.FONT_HERSHEY_SIMPLEX
         txt_size = cv2.getTextSize(text, font, 0.5, 2)[0]
